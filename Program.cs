@@ -21,45 +21,64 @@ var builder = new ConfigurationBuilder()
 IConfiguration config = builder.Build();
 
 //Azure OpenAI service credentials
-string openAiEndpoint = config["AzureOpenAI:Endpoint"]!;
+ string openAiEndpoint = config["AzureOpenAI:Endpoint"]!;
 string openAiApiKey = config["AzureOpenAI:ApiKey"]!;
 string deploymentName = config["AzureOpenAI:DeploymentName"]!;
 
 //Sample pdf file url
-string filePath = @"https://storage.googleapis.com/akute-ehr-documents-dev/66d1559db301ef0008a8d6ee%2Fd25edc1c-9fa6-4611-914e-c7d3e56f8723%2FDiagnostic_Report-sathiya%20s-2025_05_02_1%3A25%3A13%3A042.pdf?GoogleAccessId=ehr-user%40akute-ehr-dev-253816.iam.gserviceaccount.com&Expires=1747467122&Signature=W4uzno1kifqe9%2Fk6rn3Xo17HaEYdBXieCaoKNtvFmVLlOFmbk0mj6wwYKgH%2BYSLzMi3xJeqCJJ8ihhPbSolUj9rmWqGLl64z1UTFVAjSX2qlBdkRMNRBo01SfgzYV4kLzQKF73Vk4kKGm7y2IFLl5itbnVhS2hv%2FB%2FIR%2FeXltexYvSgk2O%2Fbvy6vptHNBCVQZYvPFYx9uFg7poAHMRGrvNY9J8jrB6sLx5CpC3q6mqn%2BE25Y%2F4MYM8VfzMjwSRGVoohHtUUNgMYXTK7n%2B8FsqyTcq7%2B9VXKdR2vr4WCo%2BXXwjTVCvW9UxDnnY%2FtqW8%2BWnYCQxB0doj%2FFOBIltBH4XA%3D%3D";
+string filePath = @"Files\Priyanka-Resume 2025.pdf";
 
 //Read the file contant from the url
 string pdfText = ExtractTextFromPdf(filePath);
 
-//Here you can ask the question based on the pdf content at run time also. For example, you can ask "What is the patient name?" or "What is the diagnosis?" etc.
+Chat();
+void Chat()
+{
+    //Here you can ask the question based on the pdf content at run time also. For example, you can ask "What is the patient name?" or "What is the diagnosis?" etc.
 
-//string? question = Console.ReadLine();
-//question = question ?? "Return the patient name, dob, gender and phone in json format";
+    Console.WriteLine("Please enter your question based on the PDF content (or press Enter to use the default question):");
+    string? question = Console.ReadLine();
+    question = string.IsNullOrWhiteSpace(question) ? "Return the name, phone number, linkedin profile and email in json format" : question;
 
-//Default question. 
-string question = "Return the patient name, dob, gender and phone in json format";
-Console.WriteLine($"your question:{question}");
+    //Default question. 
+    //string question = "Return the patient name, dob, gender and phone in json format";
+    Console.WriteLine($"your question:{question}");
 
-//string question = Console.ReadLine();
+    //string question = Console.ReadLine();
 
-//Create the prompt with pdf content and user question
-string prompt = $"You are a helpful assistant. Use the PDF content below to answer the question.\n\nPDF Content:\n{pdfText}\n\nQuestion: {question}";
+    //Create the prompt with pdf content and user question
+    string prompt = $"You are a helpful assistant. Use the PDF content below to answer the question.\n\nPDF Content:\n{pdfText}\n\nQuestion: {question}";
 
-//Send question + context to Azure OpenAI
-string response = GetResponseFromAzureOpenAI(openAiEndpoint, openAiApiKey, deploymentName, prompt);
+    //Send question + context to Azure OpenAI
+    string response = GetResponseFromAzureOpenAI(openAiEndpoint, openAiApiKey, deploymentName, prompt);
 
-//Actual Response from OpenIAi
-Console.WriteLine("\nAssistant Response:");
-Console.WriteLine(response);
+    //Actual Response from OpenIAi
+    Console.WriteLine("\nAssistant Response:");
+    Console.WriteLine(response);
 
-var responseObj = JsonSerializer.Deserialize<ResponseObj>(response);
+    Console.WriteLine("\nPress 1 to continue. 2 to disconnect.");
+    string? input = Console.ReadLine();
+    if (input == "1")
+    {
+        Chat();
+    }
+    else
+    {
+        Console.WriteLine("Disconnected. Press any key to exit.");
+        Console.ReadKey();
+    }
 
-Console.WriteLine("------------------------------------------------");
+}
 
-Console.WriteLine($"Patient Name: {responseObj?.patient_name}");
-Console.WriteLine("Phone:" + responseObj?.phone);
-Console.WriteLine("Gender:" + responseObj?.gender);
-Console.WriteLine("DOB:" + responseObj?.dob);
+
+//var responseObj = JsonSerializer.Deserialize<ResponseObj>(response);
+
+//Console.WriteLine("------------------------------------------------");
+
+//Console.WriteLine($"Patient Name: {responseObj?.patient_name}");
+//Console.WriteLine("Phone:" + responseObj?.phone);
+//Console.WriteLine("Gender:" + responseObj?.gender);
+//Console.WriteLine("DOB:" + responseObj?.dob);
 #endregion
 
 #region Extract contant from PDF
